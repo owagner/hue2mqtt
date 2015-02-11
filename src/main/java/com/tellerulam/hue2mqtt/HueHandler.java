@@ -1,10 +1,10 @@
 package com.tellerulam.hue2mqtt;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 import com.philips.lighting.hue.sdk.*;
 import com.philips.lighting.model.*;
-import com.sun.istack.internal.logging.*;
 
 public class HueHandler implements PHSDKListener
 {
@@ -119,5 +119,5 @@ public class HueHandler implements PHSDKListener
 		}
 	}
 
-	private static final Logger L=Logger.getLogger(HueHandler.class);
+	private static final Logger L=Logger.getLogger(HueHandler.class.getName());
 }
