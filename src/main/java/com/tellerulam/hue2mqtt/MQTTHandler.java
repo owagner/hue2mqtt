@@ -149,10 +149,12 @@ public class MQTTHandler
 	static void publish(String name, boolean retain, Object... vals)
 	{
 		JsonObject jso=new JsonObject();
-		for(int pix=0;pix<vals.length;pix+=1)
+		for(int pix=0;pix<vals.length;pix+=2)
 		{
 			String vname=vals[pix].toString();
 			Object val=vals[pix+1];
+			if(val==null)
+				continue;
 			if(val instanceof BigDecimal)
 				jso.add(vname,((BigDecimal)val).doubleValue());
 			else if(val instanceof Integer)

@@ -66,7 +66,13 @@ public class HueHandler implements PHSDKListener
 		phHueSDK.setSelectedBridge(b);
 		phHueSDK.enableHeartbeat(b, PHHueSDK.HB_INTERVAL);
 		MQTTHandler.setHueConnectionState(true);
-		reportLights();
+		Main.t.schedule(new TimerTask(){
+			@Override
+			public void run()
+			{
+				reportLights();
+			}
+		},2000);
 	}
 
 	@Override
@@ -94,7 +100,7 @@ public class HueHandler implements PHSDKListener
 	@Override
 	public void onError(int e, String msg)
 	{
-		L.warning("Error connecting to bridge. Code "+e+": "+msg);
+		L.warning("Error in bridge connection. Code "+e+": "+msg);
 	}
 
 	@Override
@@ -103,18 +109,26 @@ public class HueHandler implements PHSDKListener
 		L.severe("Internal API error "+errors);
 	}
 
-	private void reportLights()
+	void reportLights()
 	{
 		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
 		for(PHLight l:cache.getAllLights())
 		{
 			PHLightState state=l.getLastKnownLightState();
 			MQTTHandler.publish(
-				l.getName(),
+				"lamp/"+l.getName(),
 				true,
 				"val", state.isOn().booleanValue() ? state.getBrightness() : Integer.valueOf(0),
+				"hue_bri", state.getBrightness(),
 				"hue_ct", state.getCt(),
-				"hue_reachable", state.isReachable()
+				"hue_reachable", state.isReachable(),
+				"hue_colormode", state.getColorMode(),
+				"hue_effect", state.getEffectMode(),
+				"hue_x", state.getX(),
+				"hue_y", state.getY(),
+				"hue_hue", state.getHue(),
+				"hue_sat", state.getSaturation(),
+				"hue_transitiontime", state.getTransitionTime()
 			);
 		}
 	}
