@@ -40,4 +40,15 @@ Method 3: Publishing a simple value to
 	
 will distinctly set a single datapoint (equal to the field names in the composite
 JSON objects) to the simple value.
+
+
+Dependencies
+------------
+* Java 1.7 SE Runtime Environment: https://www.java.com/
+* Eclipse Paho: https://www.eclipse.org/paho/clients/java/ (used for MQTT communication)
+* Minimal-JSON: https://github.com/ralfstx/minimal-json (used for JSON creation and parsing)
+* Philips HUE Java API Library: https://github.com/PhilipsHue/PhilipsHueSDK-Java-MultiPlatform-Android
+
+[![Build Status](https://travis-ci.org/owagner/hue2mqtt.svg)](https://travis-ci.org/owagner/hue2mqtt) Automatically built jars can be downloaded from the release page on GitHub at https://github.com/owagner/hue2mqtt/releases
+
      
