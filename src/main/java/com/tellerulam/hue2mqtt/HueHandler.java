@@ -3,6 +3,7 @@ package com.tellerulam.hue2mqtt;
 import java.util.*;
 import java.util.logging.Logger;
 
+import com.philips.lighting.hue.listener.*;
 import com.philips.lighting.hue.sdk.*;
 import com.philips.lighting.model.*;
 
@@ -109,7 +110,7 @@ public class HueHandler implements PHSDKListener
 		L.severe("Internal API error "+errors);
 	}
 
-	void reportLights()
+	static void reportLights()
 	{
 		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
 		for(PHLight l:cache.getAllLights())
@@ -133,5 +134,62 @@ public class HueHandler implements PHSDKListener
 		}
 	}
 
+	public static PHLight findLightByName(String name)
+	{
+		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
+		for(PHLight l:cache.getAllLights())
+		{
+			if(name.equals(l.getName()))
+				return l;
+		}
+		L.warning("Unable to find light "+name);
+		return null;
+	}
+
 	private static final Logger L=Logger.getLogger(HueHandler.class.getName());
+
+	public static void updateLightState(final PHLight light,PHLightState ls)
+	{
+		phHueSDK.getSelectedBridge().updateLightState(light, ls,new PHLightListener() {
+
+			@Override
+			public void onSuccess()
+			{
+				L.info("Updating state ok for "+light);
+			}
+
+			@Override
+			public void onStateUpdate(Map<String, String> p, List<PHHueError> err)
+			{
+				reportLights();
+				L.info(p.toString());
+				L.info(err.toString());
+			}
+
+			@Override
+			public void onError(int rc, String msg)
+			{
+				L.info("Updating state FAILED for "+light+" RC "+rc+": "+msg);
+			}
+
+			@Override
+			public void onSearchComplete()
+			{
+				/* Ignore */
+			}
+
+			@Override
+			public void onReceivingLights(List<PHBridgeResource> arg0)
+			{
+				/* Ignore */
+			}
+
+			@Override
+			public void onReceivingLightDetails(PHLight arg0)
+			{
+				/* Ignore */
+			}
+		});
+	}
+
 }

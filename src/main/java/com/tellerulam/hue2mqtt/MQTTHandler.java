@@ -9,6 +9,7 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.*;
 
 import com.eclipsesource.json.*;
+import com.philips.lighting.model.*;
 
 public class MQTTHandler
 {
@@ -68,10 +69,63 @@ public class MQTTHandler
 			return;
 		}
 
+		String payload=new String(msg.getPayload());
+
+		/*
+		 * Possible formats:
+		 *
+		 * lightname <simple value>
+		 * lightname <json>
+		 * lightname/<datapoint> <simple value>
+		 */
+
 		int slashIx=topic.lastIndexOf('/');
 		if(slashIx>=0)
 		{
+			// Third format
+			processSetDatapoint(topic.substring(0,slashIx),topic.substring(slashIx+1),payload);
 		}
+		else
+		{
+			// One of the first two foramts
+			processSetComposite(topic,payload);
+		}
+	}
+
+	@SuppressWarnings("boxing")
+	private void processSetComposite(String lamp, String payload)
+	{
+		PHLightState ls=new PHLightState();
+		PHLight l=HueHandler.findLightByName(lamp);
+		if(l==null)
+			return;
+
+		// Attempt to decode payload as a JSON object
+		if(payload.trim().startsWith("{"))
+		{
+			JsonObject jso=JsonObject.readFrom(payload);
+			/* TODO */
+		}
+		else
+		{
+			double level=Double.parseDouble(payload);
+			if(level==0)
+			{
+				ls.setOn(false);
+			}
+			else
+			{
+				ls.setOn(true);
+				ls.setBrightness((int)level);
+
+			}
+		}
+		HueHandler.updateLightState(l,ls);
+	}
+
+	private void processSetDatapoint(String lamp, String datapoint, String payload)
+	{
+		/* TODO */
 	}
 
 	void processMessage(String topic,MqttMessage msg)
