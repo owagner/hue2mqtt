@@ -115,7 +115,7 @@ public class SyslogHandler extends Handler
 		dateFormatter.close();
 		m.append(" ");
 		m.append(hostname);
-		m.append(" logic4mqtt");
+		m.append(" hue2mqtt");
 		m.append(pidSuffix);
 		m.append(": ");
 		int prefixLength=m.length();

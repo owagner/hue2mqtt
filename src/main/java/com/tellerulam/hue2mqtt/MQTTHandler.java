@@ -1,15 +1,19 @@
 package com.tellerulam.hue2mqtt;
 
-import java.math.*;
 import java.nio.charset.*;
 import java.util.*;
 import java.util.logging.*;
+import java.util.regex.*;
 
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.*;
 
 import com.eclipsesource.json.*;
+import com.eclipsesource.json.JsonObject.Member;
 import com.philips.lighting.model.*;
+import com.philips.lighting.model.PHLight.PHLightAlertMode;
+import com.philips.lighting.model.PHLight.PHLightColorMode;
+import com.philips.lighting.model.PHLight.PHLightEffectMode;
 
 public class MQTTHandler
 {
@@ -61,78 +65,198 @@ public class MQTTHandler
 
 	private boolean shouldBeConnected;
 
+	private final Pattern topicPattern=Pattern.compile("([^/]+/[^/]+)(?:/(on|bri|hue|sat|ct|alert|effect|colormode|reachable|x|y|transitiontime))?");
+
+	private final Map<String,Integer> transitionTimeCache=new HashMap<>();
+
 	void processSet(String topic,MqttMessage msg)
 	{
-		if(msg.isRetained())
-		{
-			L.fine("Ignoring retained set message "+msg+" to "+topic);
-			return;
-		}
-
 		String payload=new String(msg.getPayload());
-
 		/*
 		 * Possible formats:
 		 *
-		 * lightname <simple value>
-		 * lightname <json>
-		 * lightname/<datapoint> <simple value>
+		 * object/name <simple value>
+		 * object/name <json>
+		 * object/name/<datapoint> <simple value>
 		 */
-
-		int slashIx=topic.lastIndexOf('/');
-		if(slashIx>=0)
+		Matcher m=topicPattern.matcher(topic);
+		if(!m.matches())
+		{
+			L.warning("Received set to unparsable topic "+topic);
+			return;
+		}
+		if(m.group(2)!=null)
 		{
 			// Third format
-			processSetDatapoint(topic.substring(0,slashIx),topic.substring(slashIx+1),payload);
+			if("transitiontime".equals(m.group(2)))
+			{
+				// We only cache that, for future refernece
+				transitionTimeCache.put(m.group(1),Integer.valueOf(payload));
+				return;
+			}
+			if(msg.isRetained())
+			{
+				L.fine("Ignoring retained set message "+msg+" to "+topic);
+				return;
+			}
+			processSetDatapoint(m.group(1),m.group(2),payload);
 		}
 		else
 		{
-			// One of the first two foramts
+			if(msg.isRetained())
+			{
+				L.fine("Ignoring retained set message "+msg+" to "+topic);
+				return;
+			}
 			processSetComposite(topic,payload);
 		}
 	}
 
 	@SuppressWarnings("boxing")
-	private void processSetComposite(String lamp, String payload)
+	private void processSetComposite(String resource, String payload)
 	{
 		PHLightState ls=new PHLightState();
-		PHLight l=HueHandler.findLightByName(lamp);
-		if(l==null)
-			return;
 
 		// Attempt to decode payload as a JSON object
 		if(payload.trim().startsWith("{"))
 		{
 			JsonObject jso=JsonObject.readFrom(payload);
-			/* TODO */
+			for(Iterator<Member> mit=jso.iterator();mit.hasNext();)
+			{
+				Member m=mit.next();
+				JsonValue val=m.getValue();
+				addDatapointToLightState(ls, m.getName(), val.isString()?val.asString():val.toString());
+			}
 		}
 		else
 		{
 			double level=Double.parseDouble(payload);
-			if(level==0)
+			if(level<=0)
 			{
 				ls.setOn(false);
 			}
 			else
 			{
+				if(level>254)
+					level=254;
 				ls.setOn(true);
 				ls.setBrightness((int)level);
-
+				// May be null
+				ls.setTransitionTime(transitionTimeCache.get(resource));
 			}
 		}
-		HueHandler.updateLightState(l,ls);
+		HueHandler.updateLightState(resource,ls);
 	}
 
-	private void processSetDatapoint(String lamp, String datapoint, String payload)
+	private void addDatapointToLightState(PHLightState ls,String datapoint,String value)
 	{
-		/* TODO */
+		switch(datapoint)
+		{
+			case "on":
+				if("1".equals(value)||"on".equals(value)||"true".equals(value))
+					ls.setOn(Boolean.TRUE);
+				else
+					ls.setOn(Boolean.FALSE);
+				break;
+			case "bri":
+				ls.setBrightness(Integer.valueOf(value));
+				break;
+			case "hue":
+				ls.setHue(Integer.valueOf(value));
+				break;
+			case "sat":
+				ls.setSaturation(Integer.valueOf(value));
+				break;
+			case "x":
+				ls.setX(Float.valueOf(value));
+				break;
+			case "y":
+				ls.setY(Float.valueOf(value));
+				break;
+			case "ct":
+				ls.setCt(Integer.valueOf(value));
+				break;
+			case "transitiontime":
+				ls.setTransitionTime(Integer.valueOf(value));
+				break;
+			case "colormode":
+				ls.setColorMode(parseColorMode(value));
+				break;
+			case "alertmode":
+				ls.setAlertMode(parseAlertMode(value));
+				break;
+			case "effectmode":
+				ls.setEffectMode(parseEffectMode(value));
+				break;
+			default:
+				throw new IllegalArgumentException("Attempting to set unknown datapoint "+datapoint+" to value "+value);
+		}
+	}
+
+	private PHLightColorMode parseColorMode(String value)
+	{
+		switch(value)
+		{
+			case "ct":
+				return PHLightColorMode.COLORMODE_CT;
+			case "xy":
+				return PHLightColorMode.COLORMODE_XY;
+			case "hs":
+				return PHLightColorMode.COLORMODE_HUE_SATURATION;
+			default:
+				throw new IllegalArgumentException("Unknown color mode "+value);
+		}
+	}
+
+	private PHLightAlertMode parseAlertMode(String value)
+	{
+		switch(value)
+		{
+			case "lselect":
+				return PHLightAlertMode.ALERT_LSELECT;
+			case "select":
+				return PHLightAlertMode.ALERT_SELECT;
+			case "none":
+				return PHLightAlertMode.ALERT_NONE;
+			default:
+				throw new IllegalArgumentException("Unknown alert mode "+value);
+		}
+	}
+
+	private PHLightEffectMode parseEffectMode(String value)
+	{
+		switch(value)
+		{
+			case "colorloop":
+				return PHLightEffectMode.EFFECT_COLORLOOP;
+			case "none":
+				return PHLightEffectMode.EFFECT_NONE;
+			default:
+				throw new IllegalArgumentException("Unknown effect mode "+value);
+		}
+	}
+
+	private void processSetDatapoint(String resource, String datapoint, String payload)
+	{
+		PHLightState ls=new PHLightState();
+		addDatapointToLightState(ls,datapoint,payload);
+		// May be null
+		ls.setTransitionTime(transitionTimeCache.get(resource));
+		HueHandler.updateLightState(resource,ls);
 	}
 
 	void processMessage(String topic,MqttMessage msg)
 	{
-		topic=topic.substring(topicPrefix.length(),topic.length());
-		if(topic.startsWith("set/"))
-			processSet(topic.substring(4),msg);
+		try
+		{
+			topic=topic.substring(topicPrefix.length(),topic.length());
+			if(topic.startsWith("set/"))
+				processSet(topic.substring(4),msg);
+		}
+		catch(Exception e)
+		{
+			L.log(Level.WARNING, "Exception when processing published message to "+topic+": "+msg,e);
+		}
 	}
 
 	private void doConnect()
@@ -146,11 +270,10 @@ public class MQTTHandler
 		{
 			mqttc.connect(copts);
 			setHueConnectionState(false);
-			L.info("Successfully connected to broker, subscribing to "+topicPrefix+"(set|get)/#");
+			L.info("Successfully connected to broker, subscribing to "+topicPrefix+"set/#");
 			try
 			{
 				mqttc.subscribe(topicPrefix+"set/#",1);
-				mqttc.subscribe(topicPrefix+"get/#",1);
 				shouldBeConnected=true;
 			}
 			catch(MqttException mqe)
@@ -200,25 +323,19 @@ public class MQTTHandler
 		Main.t.schedule(new StateChecker(),30*1000,30*1000);
 	}
 
-	static void publish(String name, boolean retain, Object... vals)
+	static private Map<String,String> previouslyPublishedValues=new HashMap<>();
+	static void publishIfChanged(String name, boolean retain, Object... vals)
 	{
-		JsonObject jso=new JsonObject();
+		WrappedJsonObject jso=new WrappedJsonObject();
 		for(int pix=0;pix<vals.length;pix+=2)
 		{
 			String vname=vals[pix].toString();
 			Object val=vals[pix+1];
-			if(val==null)
-				continue;
-			if(val instanceof BigDecimal)
-				jso.add(vname,((BigDecimal)val).doubleValue());
-			else if(val instanceof Integer)
-				jso.add(vname,((Integer)val).intValue());
-			else if(val instanceof Boolean)
-				jso.add(vname,((Boolean)val).booleanValue()?1:0);
-			else
-				jso.add(vname,val.toString());
+			jso.add(vname,val);
 		}
 		String txtmsg=jso.toString();
+		if(txtmsg.equals(previouslyPublishedValues.put(name,txtmsg)))
+			return;
 		MqttMessage msg=new MqttMessage(txtmsg.getBytes(StandardCharsets.UTF_8));
 		msg.setQos(0);
 		msg.setRetained(retain);

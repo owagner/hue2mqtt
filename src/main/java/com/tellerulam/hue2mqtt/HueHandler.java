@@ -3,6 +3,7 @@ package com.tellerulam.hue2mqtt;
 import java.util.*;
 import java.util.logging.Logger;
 
+import com.eclipsesource.json.*;
 import com.philips.lighting.hue.listener.*;
 import com.philips.lighting.hue.sdk.*;
 import com.philips.lighting.model.*;
@@ -82,6 +83,16 @@ public class HueHandler implements PHSDKListener
 		L.info("Cache updated "+notification);
 		if(notification.contains(PHMessageType.LIGHTS_CACHE_UPDATED))
 			reportLights();
+		if(notification.contains(PHMessageType.GROUPS_CACHE_UPDATED))
+		{
+			PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
+			L.info("Available groups "+cache.getGroups());
+		}
+		if(notification.contains(PHMessageType.SCENE_CACHE_UPDATED))
+		{
+			PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
+			L.info("Available scenes "+cache.getScenes());
+		}
 	}
 
 	@Override
@@ -110,86 +121,187 @@ public class HueHandler implements PHSDKListener
 		L.severe("Internal API error "+errors);
 	}
 
+	private static String reworkName(Object enumValue)
+	{
+		String name=enumValue.toString();
+		int usc=name.indexOf('_');
+		if(usc>=0)
+			name=name.substring(usc+1);
+		// Use the value of the raw API
+		if("HUE_SATURATION".equals(name))
+			return "hs";
+		// Occasionally we receive status updates with the modes set to UNKNOWN
+		// To avoid bogus publishes, we change that to "none"
+		if("UNKNOWN".equals(name))
+			return "none";
+		return name.toLowerCase();
+	}
+
 	static void reportLights()
 	{
 		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
 		for(PHLight l:cache.getAllLights())
 		{
 			PHLightState state=l.getLastKnownLightState();
-			MQTTHandler.publish(
-				"lamp/"+l.getName(),
+			/*
+			 * Generate a JSON object with the state
+			 */
+			WrappedJsonObject json=new WrappedJsonObject();
+			json.add("on",state.isOn());
+			json.add("bri",state.getBrightness());
+			json.add("hue",state.getHue());
+			json.add("sat",state.getSaturation());
+			json.add("ct",state.getCt());
+			json.add("transitiontime",state.getTransitionTime());
+			json.add("alert",reworkName(state.getAlertMode()));
+			json.add("effect",reworkName(state.getEffectMode()));
+			json.add("colormode",reworkName(state.getColorMode()));
+			json.add("reachable",state.isReachable());
+			if(state.getX()!=null)
+			{
+				JsonArray xy=new JsonArray();
+				xy.add(state.getX().floatValue());
+				xy.add(state.getY().floatValue());
+				json.add("xy",xy);
+			}
+			MQTTHandler.publishIfChanged(
+				"lights/"+l.getName(),
 				true,
 				"val", state.isOn().booleanValue() ? state.getBrightness() : Integer.valueOf(0),
-				"hue_bri", state.getBrightness(),
-				"hue_ct", state.getCt(),
-				"hue_reachable", state.isReachable(),
-				"hue_colormode", state.getColorMode(),
-				"hue_effect", state.getEffectMode(),
-				"hue_x", state.getX(),
-				"hue_y", state.getY(),
-				"hue_hue", state.getHue(),
-				"hue_sat", state.getSaturation(),
-				"hue_transitiontime", state.getTransitionTime()
+				"hue_state", json
 			);
 		}
 	}
 
-	public static PHLight findLightByName(String name)
+	private static final Logger L=Logger.getLogger(HueHandler.class.getName());
+
+	private static final PHBridgeResource DEFAULT_GROUP_RESOURCE=new PHBridgeResource(null, null);
+
+	public static PHBridgeResource findResourceByName(String name)
 	{
 		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
-		for(PHLight l:cache.getAllLights())
+		if(name.startsWith("lights/"))
 		{
-			if(name.equals(l.getName()))
-				return l;
+			name=name.substring(7);
+			for(PHLight l:cache.getAllLights())
+			{
+				if(name.equals(l.getName()))
+					return l;
+			}
+			return cache.getLights().get(name);
 		}
-		L.warning("Unable to find light "+name);
+		if(name.startsWith("groups/"))
+		{
+			name=name.substring(7);
+			for(PHGroup g:cache.getAllGroups())
+			{
+				if(name.equals(g.getName()))
+					return g;
+			}
+			if("0".equals(name))
+				return DEFAULT_GROUP_RESOURCE;
+			return cache.getGroups().get(name);
+		}
 		return null;
 	}
 
-	private static final Logger L=Logger.getLogger(HueHandler.class.getName());
-
-	public static void updateLightState(final PHLight light,PHLightState ls)
+	public static void updateLightState(String name,PHLightState ls)
 	{
-		phHueSDK.getSelectedBridge().updateLightState(light, ls,new PHLightListener() {
+		final PHBridgeResource res=findResourceByName(name);
+		if(res==null)
+		{
+			L.info("Unable to find resource by name "+name);
+			return;
+		}
 
-			@Override
-			public void onSuccess()
-			{
-				L.info("Updating state ok for "+light);
-			}
+		if(res instanceof PHLight)
+		{
+			phHueSDK.getSelectedBridge().updateLightState((PHLight)res, ls,new PHLightListener() {
 
-			@Override
-			public void onStateUpdate(Map<String, String> p, List<PHHueError> err)
-			{
-				reportLights();
-				L.info(p.toString());
-				L.info(err.toString());
-			}
+				@Override
+				public void onSuccess()
+				{
+					L.fine("Updating state ok for "+res);
+				}
 
-			@Override
-			public void onError(int rc, String msg)
-			{
-				L.info("Updating state FAILED for "+light+" RC "+rc+": "+msg);
-			}
+				@Override
+				public void onStateUpdate(Map<String, String> p, List<PHHueError> err)
+				{
+					// Done by cache_updated notification
+					//reportLights();
+				}
 
-			@Override
-			public void onSearchComplete()
-			{
-				/* Ignore */
-			}
+				@Override
+				public void onError(int rc, String msg)
+				{
+					L.info("Updating state FAILED for "+res+" RC "+rc+": "+msg);
+				}
 
-			@Override
-			public void onReceivingLights(List<PHBridgeResource> arg0)
-			{
-				/* Ignore */
-			}
+				@Override
+				public void onSearchComplete()
+				{
+					/* Ignore */
+				}
 
-			@Override
-			public void onReceivingLightDetails(PHLight arg0)
-			{
-				/* Ignore */
-			}
-		});
+				@Override
+				public void onReceivingLights(List<PHBridgeResource> arg0)
+				{
+					/* Ignore */
+				}
+
+				@Override
+				public void onReceivingLightDetails(PHLight arg0)
+				{
+					/* Ignore */
+				}
+			});
+		}
+		else if(res==DEFAULT_GROUP_RESOURCE)
+		{
+			phHueSDK.getSelectedBridge().setLightStateForDefaultGroup(ls);
+		}
+		else if(res instanceof PHGroup)
+		{
+			phHueSDK.getSelectedBridge().setLightStateForGroup(res.getIdentifier(),ls,new PHGroupListener(){
+
+				@Override
+				public void onError(int rc, String msg)
+				{
+					L.info("Updating state FAILED for "+res+" RC "+rc+": "+msg);
+				}
+
+				@Override
+				public void onStateUpdate(Map<String, String> p, List<PHHueError> err)
+				{
+					// Done by cache_updated notification
+					//reportLights();
+				}
+
+				@Override
+				public void onSuccess()
+				{
+					L.fine("Updating state ok for "+res);
+				}
+
+				@Override
+				public void onCreated(PHGroup arg0)
+				{
+					// Ignore
+				}
+
+				@Override
+				public void onReceivingAllGroups(List<PHBridgeResource> arg0)
+				{
+					// Ignore
+				}
+
+				@Override
+				public void onReceivingGroupDetails(PHGroup arg0)
+				{
+					// Ignore
+				}
+
+			});
+		}
 	}
-
 }
