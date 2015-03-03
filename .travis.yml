@@ -3,7 +3,7 @@ before_deploy: "gradle jar"
 deploy:
   provider: releases
   api_key:
-    secure: BSI9PlQhhOMXUm2cr8YZs+yT5vX+dLyuPNpx8uvbO1R4TvnT2hZlVt4CDV3iQUNxMF5dD+1NIbZGKfXYk7bH2Ei8AGpiObhl7peFjX9wezqV5aRct2A3eS50mO7uzD3DOt7+6jcpVzTzwiNuzRkWRuSsOocTQc5kE4A5OfcAspY=
+    secure: Skonfc6lFRDzP5ETjPzcvzdrzVN8MC3zqu1DR4i6u4ORGcAcmXm3oDtYyQCfxZ58L8tOb9n1Co0DDoOmokXreeCM20NE42XKf0BeJ3YEvocIwjdxLQ1CCA2gJ5x4aJWOhLlRW8lkbR3O+nVMEFoz9S8lS/5ruaWazQDNQJhKpDI=
   file: "build/libs/hue2mqtt.jar"
   skip_cleanup: true
   on:
