@@ -34,16 +34,16 @@ The payload is a JSON encoded object with the following fields:
 
 * val - either 0 if the lamp is off, or the current brightness (1..254)
 * hue_state - A JSON object which has the complete lamp state as returned from the Hue API:
-   on: boolean, whether the lamp is on
-   bri: current brightness 1..254
-   hue: hue from 0..65535
-   sat: saturation from 0..254
-   xy: an array of floats containing the coordinates (0..1) in CIE colorspace
-   ct: Mired color temperature (153..500)
-   alert: alert effect, textual
-   effect: color effect, textual
-   colormode: current color mode, textual (ct, hs, or xy)
-   reachable: boolean, whether the light is reachable
+   * on: boolean, whether the lamp is on
+   * bri: current brightness 1..254
+   * hue: hue from 0..65535
+   * sat: saturation from 0..254
+   * xy: an array of floats containing the coordinates (0..1) in CIE colorspace
+   * ct: Mired color temperature (153..500)
+   * alert: alert effect, textual
+   * effect: color effect, textual
+   * colormode: current color mode, textual (ct, hs, or xy)
+   * reachable: boolean, whether the light is reachable
 
 Setting state is possible in one of three ways:    
 
