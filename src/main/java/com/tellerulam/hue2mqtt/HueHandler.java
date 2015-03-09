@@ -61,6 +61,31 @@ public class HueHandler implements PHSDKListener
 		phHueSDK.startPushlinkAuthentication(pap);
 	}
 
+	private void reportGroups(PHBridgeResourcesCache cache)
+	{
+		StringBuilder r=new StringBuilder("Available groups:");
+		for(Map.Entry<String,PHGroup> me:cache.getGroups().entrySet())
+		{
+			r.append(' ');
+			r.append(me.getKey());
+			r.append('/');
+			r.append(me.getValue().getName());
+		}
+		L.info(r.toString());
+	}
+	private void reportScenes(PHBridgeResourcesCache cache)
+	{
+		StringBuilder r=new StringBuilder("Available scenes:");
+		for(Map.Entry<String,PHScene> me:cache.getScenes().entrySet())
+		{
+			r.append(' ');
+			r.append(me.getKey());
+			r.append('/');
+			r.append(me.getValue().getName());
+		}
+		L.info(r.toString());
+	}
+
 	@Override
 	public void onBridgeConnected(PHBridge b)
 	{
@@ -75,23 +100,26 @@ public class HueHandler implements PHSDKListener
 				reportLights();
 			}
 		},2000);
+		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
+		reportGroups(cache);
+		reportScenes(cache);
 	}
 
 	@Override
 	public void onCacheUpdated(List<Integer> notification, PHBridge b)
 	{
-		L.info("Cache updated "+notification);
+		L.fine("Cache updated "+notification);
 		if(notification.contains(PHMessageType.LIGHTS_CACHE_UPDATED))
 			reportLights();
 		if(notification.contains(PHMessageType.GROUPS_CACHE_UPDATED))
 		{
 			PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
-			L.info("Available groups "+cache.getGroups());
+			reportGroups(cache);
 		}
 		if(notification.contains(PHMessageType.SCENE_CACHE_UPDATED))
 		{
 			PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
-			L.info("Available scenes "+cache.getScenes());
+			reportScenes(cache);
 		}
 	}
 
@@ -193,13 +221,13 @@ public class HueHandler implements PHSDKListener
 		if(name.startsWith("groups/"))
 		{
 			name=name.substring(7);
+			if("0".equals(name))
+				return DEFAULT_GROUP_RESOURCE;
 			for(PHGroup g:cache.getAllGroups())
 			{
 				if(name.equals(g.getName()))
 					return g;
 			}
-			if("0".equals(name))
-				return DEFAULT_GROUP_RESOURCE;
 			return cache.getGroups().get(name);
 		}
 		return null;

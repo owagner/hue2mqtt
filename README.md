@@ -87,4 +87,10 @@ Dependencies
 
 [![Build Status](https://travis-ci.org/owagner/hue2mqtt.svg)](https://travis-ci.org/owagner/hue2mqtt) Automatically built jars can be downloaded from the release page on GitHub at https://github.com/owagner/hue2mqtt/releases
 
+
+History
+-------
+* 0.4 - 2015/03/09 - owagner
+  - better output of available groups and scenes after initial connect
+  
      

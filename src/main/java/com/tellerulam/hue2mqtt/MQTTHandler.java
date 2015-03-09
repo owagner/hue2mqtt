@@ -131,7 +131,7 @@ public class MQTTHandler
 		else
 		{
 			double level=Double.parseDouble(payload);
-			if(level<=0)
+			if(level<1)
 			{
 				ls.setOn(false);
 			}
@@ -141,9 +141,9 @@ public class MQTTHandler
 					level=254;
 				ls.setOn(true);
 				ls.setBrightness((int)level);
-				// May be null
-				ls.setTransitionTime(transitionTimeCache.get(resource));
 			}
+			// May be null
+			ls.setTransitionTime(transitionTimeCache.get(resource));
 		}
 		HueHandler.updateLightState(resource,ls);
 	}
