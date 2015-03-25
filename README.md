@@ -8,17 +8,12 @@ hue2mqtt
 
 Overview
 --------
-Gateway between a Philips Hue bridge and MQTT
+Gateway between a Philips Hue bridge and MQTT, using the official Philips
+Java API library.
 
 It is intended as a building block in heterogenous smart home environments where 
 an MQTT message broker is used as the centralized message bus.
 See https://github.com/mqtt-smarthome for a rationale and architectural overview.
-
-hm2mqtt communicates with Homematic using the documented XML-RPC API
-and thus requires either an CCU1/CCU2 or a Homematic configuration adapter with
-the XML-RPC service running on a host (currently Windows-only). It is _not_
-able to talk directly to Homematic devices using 3rd party hardware like a CUL.
-
 
 
 Topic structure
