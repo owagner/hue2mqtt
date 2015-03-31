@@ -8,6 +8,8 @@ import com.eclipsesource.json.*;
 
 public class WrappedJsonObject extends JsonObject
 {
+	private static final long serialVersionUID = 1L;
+
 	public void add(String name,Object val)
 	{
 		if(val==null)
@@ -24,6 +26,5 @@ public class WrappedJsonObject extends JsonObject
 			add(name,(JsonValue)val);
 		else
 			add(name,val.toString());
-
 	}
 }
