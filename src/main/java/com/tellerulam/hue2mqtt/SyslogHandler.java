@@ -18,7 +18,7 @@ public class SyslogHandler extends Handler
 		}
 	}
 
-	private DatagramSocket ds;
+	private final DatagramSocket ds;
 	private String hostname;
 	private String pidSuffix;
 
@@ -88,8 +88,7 @@ public class SyslogHandler extends Handler
 		}
 		catch(IOException e)
 		{
-			ds.close();
-			ds=null;
+			/* Ignore */
 		}
 	}
 

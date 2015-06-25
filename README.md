@@ -85,6 +85,10 @@ Dependencies
 
 History
 -------
+* 0.5 - 2015/06/25 - owagner
+  - fix syslog logging to ignore intermediate IO errors
+  - minimal-json updated to 0.9.2
+
 * 0.4 - 2015/03/09 - owagner
   - better output of available groups and scenes after initial connect
   
