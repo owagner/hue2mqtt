@@ -65,6 +65,11 @@ Method 3: Publishing a simple value to
 will distinctly set a single datapoint (equal to the field names in the composite
 JSON state object) to the simple value.
 
+The fields "bri", "hue", "sat", "x", "y" and "ct" have variants with a "_inc" suffix
+which accept a relative value. For example, setting "bri_inc" to "5" will increase
+the brightness by 5, setting "bri_inc" to "-5" will decrease the brightness by 5.
+The values will clip properly within their allowed range.
+
 The same is possible with groups:
 
 	hue/set/groups/<groupname>
@@ -85,6 +90,10 @@ Dependencies
 
 History
 -------
+* 0.6 - 2015/07/15 - owagner
+  - updated SDK libs to 1.8
+  - added support for the "_inc" variants of fields. Implements [3]
+
 * 0.5 - 2015/06/25 - owagner
   - fix syslog logging to ignore intermediate IO errors
   - minimal-json updated to 0.9.2

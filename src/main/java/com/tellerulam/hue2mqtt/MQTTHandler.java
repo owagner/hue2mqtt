@@ -161,20 +161,38 @@ public class MQTTHandler
 			case "bri":
 				ls.setBrightness(Integer.valueOf(value));
 				break;
+			case "bri_inc":
+				ls.setIncrementBri(Integer.valueOf(value));
+				break;
 			case "hue":
 				ls.setHue(Integer.valueOf(value));
+				break;
+			case "hue_inc":
+				ls.setIncrementHue(Integer.valueOf(value));
 				break;
 			case "sat":
 				ls.setSaturation(Integer.valueOf(value));
 				break;
+			case "sat_inc":
+				ls.setIncrementSat(Integer.valueOf(value));
+				break;
 			case "x":
 				ls.setX(Float.valueOf(value));
+				break;
+			case "x_inc":
+				ls.setIncrementX(Float.valueOf(value));
 				break;
 			case "y":
 				ls.setY(Float.valueOf(value));
 				break;
+			case "y_inc":
+				ls.setIncrementY(Float.valueOf(value));
+				break;
 			case "ct":
 				ls.setCt(Integer.valueOf(value));
+				break;
+			case "ct_inc":
+				ls.setIncrementCt(Integer.valueOf(value));
 				break;
 			case "transitiontime":
 				ls.setTransitionTime(Integer.valueOf(value));
