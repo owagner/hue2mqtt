@@ -65,7 +65,7 @@ public class MQTTHandler
 
 	private boolean shouldBeConnected;
 
-	private final Pattern topicPattern=Pattern.compile("([^/]+/[^/]+)(?:/(on|bri|hue|sat|ct|alert|effect|colormode|reachable|x|y|transitiontime))?");
+	private final Pattern topicPattern=Pattern.compile("([^/]+/[^/]+)(?:/((?:on|bri|hue|sat|ct|alert|effect|colormode|reachable|x|y|transitiontime)(?:_inc)?))?");
 
 	private final Map<String,Integer> transitionTimeCache=new HashMap<>();
 
@@ -90,7 +90,7 @@ public class MQTTHandler
 			// Third format
 			if("transitiontime".equals(m.group(2)))
 			{
-				// We only cache that, for future refernece
+				// We only cache that, for future reference
 				transitionTimeCache.put(m.group(1),Integer.valueOf(payload));
 				return;
 			}

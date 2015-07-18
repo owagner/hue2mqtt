@@ -90,9 +90,13 @@ Dependencies
 
 History
 -------
+* 0.7 - 2015/07/18 - owagner
+  - fixed direct datapoint set variant of _inc fields
+  - updated eclipse-paho to 1.0.2
+  
 * 0.6 - 2015/07/15 - owagner
   - updated SDK libs to 1.8
-  - added support for the "_inc" variants of fields. Implements [3]
+  - added support for the "_inc" variants of fields. Implements #3
 
 * 0.5 - 2015/06/25 - owagner
   - fix syslog logging to ignore intermediate IO errors
