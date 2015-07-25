@@ -120,7 +120,7 @@ public class MQTTHandler
 		// Attempt to decode payload as a JSON object
 		if(payload.trim().startsWith("{"))
 		{
-			JsonObject jso=JsonObject.readFrom(payload);
+			JsonObject jso=(JsonObject)Json.parse(payload);
 			for(Iterator<Member> mit=jso.iterator();mit.hasNext();)
 			{
 				Member m=mit.next();

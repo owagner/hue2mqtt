@@ -271,6 +271,7 @@ public class HueHandler implements PHSDKListener
 					/* Ignore */
 				}
 
+				@Deprecated
 				@Override
 				public void onReceivingLights(List<PHBridgeResource> arg0)
 				{

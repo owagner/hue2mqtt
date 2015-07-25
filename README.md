@@ -90,9 +90,9 @@ Dependencies
 
 History
 -------
-* 0.7 - 2015/07/18 - owagner
+* 0.7 - 2015/07/25 - owagner
   - fixed direct datapoint set variant of _inc fields
-  - updated eclipse-paho to 1.0.2
+  - updated eclipse-paho to 1.0.2 and minimal-json to 0.9.4
   
 * 0.6 - 2015/07/15 - owagner
   - updated SDK libs to 1.8
