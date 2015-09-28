@@ -203,7 +203,7 @@ public class MQTTHandler
 			case "alert":
 				ls.setAlertMode(parseAlertMode(value));
 				break;
-			case "effectmode":
+			case "effect":
 				ls.setEffectMode(parseEffectMode(value));
 				break;
 			default:
