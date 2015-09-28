@@ -87,25 +87,6 @@ public class HueHandler implements PHSDKListener
 	}
 
 	@Override
-	public void onBridgeConnected(PHBridge b)
-	{
-		L.info("Successfully connected to Hue bridge");
-		phHueSDK.setSelectedBridge(b);
-		phHueSDK.enableHeartbeat(b, PHHueSDK.HB_INTERVAL);
-		MQTTHandler.setHueConnectionState(true);
-		Main.t.schedule(new TimerTask(){
-			@Override
-			public void run()
-			{
-				reportLights();
-			}
-		},2000);
-		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
-		reportGroups(cache);
-		reportScenes(cache);
-	}
-
-	@Override
 	public void onCacheUpdated(List<Integer> notification, PHBridge b)
 	{
 		L.fine("Cache updated "+notification);
@@ -332,5 +313,24 @@ public class HueHandler implements PHSDKListener
 
 			});
 		}
+	}
+
+	@Override
+	public void onBridgeConnected(PHBridge b, String name)
+	{
+		L.info("Successfully connected to Hue bridge as "+name);
+		phHueSDK.setSelectedBridge(b);
+		phHueSDK.enableHeartbeat(b, PHHueSDK.HB_INTERVAL);
+		MQTTHandler.setHueConnectionState(true);
+		Main.t.schedule(new TimerTask(){
+			@Override
+			public void run()
+			{
+				reportLights();
+			}
+		},2000);
+		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
+		reportGroups(cache);
+		reportScenes(cache);
 	}
 }
