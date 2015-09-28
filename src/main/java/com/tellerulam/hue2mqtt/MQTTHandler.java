@@ -200,7 +200,7 @@ public class MQTTHandler
 			case "colormode":
 				ls.setColorMode(parseColorMode(value));
 				break;
-			case "alertmode":
+			case "alert":
 				ls.setAlertMode(parseAlertMode(value));
 				break;
 			case "effectmode":
