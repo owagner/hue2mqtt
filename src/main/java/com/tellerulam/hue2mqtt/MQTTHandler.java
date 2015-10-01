@@ -148,6 +148,14 @@ public class MQTTHandler
 		HueHandler.updateLightState(resource,ls);
 	}
 
+	/*
+	 * Parse a number and truncate to integer
+	 */
+	private int parseNumber(String number)
+	{
+		return (int)Double.parseDouble(number);
+	}
+
 	private void addDatapointToLightState(PHLightState ls,String datapoint,String value)
 	{
 		switch(datapoint)
@@ -159,22 +167,22 @@ public class MQTTHandler
 					ls.setOn(Boolean.FALSE);
 				break;
 			case "bri":
-				ls.setBrightness(Integer.valueOf(value));
+				ls.setBrightness(parseNumber(value));
 				break;
 			case "bri_inc":
-				ls.setIncrementBri(Integer.valueOf(value));
+				ls.setIncrementBri(parseNumber(value));
 				break;
 			case "hue":
-				ls.setHue(Integer.valueOf(value));
+				ls.setHue(parseNumber(value));
 				break;
 			case "hue_inc":
-				ls.setIncrementHue(Integer.valueOf(value));
+				ls.setIncrementHue(parseNumber(value));
 				break;
 			case "sat":
-				ls.setSaturation(Integer.valueOf(value));
+				ls.setSaturation(parseNumber(value));
 				break;
 			case "sat_inc":
-				ls.setIncrementSat(Integer.valueOf(value));
+				ls.setIncrementSat(parseNumber(value));
 				break;
 			case "x":
 				ls.setX(Float.valueOf(value));
@@ -189,13 +197,13 @@ public class MQTTHandler
 				ls.setIncrementY(Float.valueOf(value));
 				break;
 			case "ct":
-				ls.setCt(Integer.valueOf(value));
+				ls.setCt(parseNumber(value));
 				break;
 			case "ct_inc":
-				ls.setIncrementCt(Integer.valueOf(value));
+				ls.setIncrementCt(parseNumber(value));
 				break;
 			case "transitiontime":
-				ls.setTransitionTime(Integer.valueOf(value));
+				ls.setTransitionTime(parseNumber(value));
 				break;
 			case "colormode":
 				ls.setColorMode(parseColorMode(value));

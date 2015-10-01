@@ -90,6 +90,10 @@ Dependencies
 
 History
 -------
+* 0.9 - 2015/10/01 - owagner
+  - truncate float numbers to integer when setting integer-only datapoints. Fixes #6
+  - update Philip Hue lib to 1.8.3
+
 * 0.8 - 2015/09/28 - hobbyquaker
   - fixed set alert
   - fixed set effect
