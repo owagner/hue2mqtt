@@ -12,6 +12,9 @@ public class HueHandler implements PHSDKListener
 {
 	private static PHHueSDK phHueSDK;
 
+	private static HashMap<String, HashMap<String, Object>> valueCache = new HashMap<String, HashMap<String, Object>>();
+
+
 	static void init()
 	{
 		phHueSDK=PHHueSDK.getInstance();
@@ -19,6 +22,7 @@ public class HueHandler implements PHSDKListener
 		phHueSDK.setDeviceName("hue2mqtt");
 		phHueSDK.getNotificationManager().registerSDKListener(new HueHandler());
 		String specifiedBridge=System.getProperty("hue2mqtt.hue.bridge");
+
 
 		if(specifiedBridge==null)
 		{
@@ -28,6 +32,7 @@ public class HueHandler implements PHSDKListener
 		else
 		{
 			PHAccessPoint pap=new PHAccessPoint();
+			L.info("trying to connect with username huetomqttuser");
 			pap.setIpAddress(specifiedBridge);
 			pap.setUsername("huetomqttuser");
 			phHueSDK.connect(pap);
@@ -50,7 +55,7 @@ public class HueHandler implements PHSDKListener
 		}
 		PHAccessPoint pap=bridges.get(0);
 		pap.setUsername("huetomqttuser");
-		L.info("Connecting to Hue bridge @ "+pap.getIpAddress());
+		L.info("Connecting to Hue bridge @ "+pap.getIpAddress() + " with username huetomqttuser");
 		phHueSDK.connect(pap);
 	}
 
@@ -148,37 +153,106 @@ public class HueHandler implements PHSDKListener
 
 	static void reportLights()
 	{
+		String lightName;
 		PHBridgeResourcesCache cache=phHueSDK.getSelectedBridge().getResourceCache();
 		for(PHLight l:cache.getAllLights())
 		{
-			PHLightState state=l.getLastKnownLightState();
-			/*
-			 * Generate a JSON object with the state
-			 */
-			WrappedJsonObject json=new WrappedJsonObject();
-			json.add("on",state.isOn());
-			json.add("bri",state.getBrightness());
-			json.add("hue",state.getHue());
-			json.add("sat",state.getSaturation());
-			json.add("ct",state.getCt());
-			json.add("transitiontime",state.getTransitionTime());
-			json.add("alert",reworkName(state.getAlertMode()));
-			json.add("effect",reworkName(state.getEffectMode()));
-			json.add("colormode",reworkName(state.getColorMode()));
-			json.add("reachable",state.isReachable());
-			if(state.getX()!=null)
-			{
-				JsonArray xy=new JsonArray();
-				xy.add(state.getX().floatValue());
-				xy.add(state.getY().floatValue());
-				json.add("xy",xy);
+			lightName = l.getName();
+
+			if (!valueCache.containsKey(lightName)) {
+				L.info("creating new valueCache for " + lightName);
+				valueCache.put(lightName, new HashMap<String, Object>());
 			}
-			MQTTHandler.publishIfChanged(
-				"lights/"+l.getName(),
-				true,
-				"val", state.isOn().booleanValue() ? state.getBrightness() : Integer.valueOf(0),
-				"hue_state", json
-			);
+
+			PHLightState state=l.getLastKnownLightState();
+
+
+			/*
+			 * 	Publish distinct datapoints
+			 */
+			if (valueCache.get(lightName).get("on") ==  null || state.isOn() != valueCache.get(lightName).get("on")) {
+				valueCache.get(lightName).put("on", state.isOn());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.isOn() != null) MQTTHandler.publishDistinct("lights/"+lightName, "on", state.isOn());
+			}
+
+			if (valueCache.get(lightName).get("bri") == null || !valueCache.get(lightName).get("bri").equals(state.getBrightness())) {
+				valueCache.get(lightName).put("bri", state.getBrightness());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.getBrightness() != null) MQTTHandler.publishDistinct("lights/"+lightName, "bri", state.getBrightness());
+			}
+
+			if (valueCache.get(lightName).get("hue") == null || !valueCache.get(lightName).get("hue").equals(state.getHue())) {
+				valueCache.get(lightName).put("hue", state.getHue());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.getHue() != null) MQTTHandler.publishDistinct("lights/"+lightName, "hue", state.getHue());
+			}
+
+			if (valueCache.get(lightName).get("sat") == null || !valueCache.get(lightName).get("sat").equals(state.getSaturation())) {
+				valueCache.get(lightName).put("sat", state.getSaturation());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.getSaturation() != null) MQTTHandler.publishDistinct("lights/"+lightName, "sat", state.getSaturation());
+			}
+
+			if (valueCache.get(lightName).get("ct") == null || !valueCache.get(lightName).get("ct").equals(state.getCt())) {
+				valueCache.get(lightName).put("ct", state.getCt());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.getCt() != null) MQTTHandler.publishDistinct("lights/"+lightName, "ct", state.getCt());
+			}
+
+			if (valueCache.get(lightName).get("transitiontime") == null || !valueCache.get(lightName).get("transitiontime").equals(state.getTransitionTime())) {
+				valueCache.get(lightName).put("transitiontime", state.getTransitionTime());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.getTransitionTime() != null) MQTTHandler.publishDistinct("lights/"+lightName, "transitiontime", state.getTransitionTime());
+			}
+
+			if (valueCache.get(lightName).get("alert") == null || !valueCache.get(lightName).get("alert").equals(state.getAlertMode())) {
+				valueCache.get(lightName).put("alert", state.getAlertMode());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.getAlertMode() != null) MQTTHandler.publishDistinct("lights/"+lightName, "alert", reworkName(state.getAlertMode()));
+			}
+
+			if (valueCache.get(lightName).get("effect") == null || !valueCache.get(lightName).get("effect").equals(state.getEffectMode())) {
+				valueCache.get(lightName).put("effect", state.getEffectMode());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.getEffectMode() != null) MQTTHandler.publishDistinct("lights/"+lightName, "effect", reworkName(state.getEffectMode()));
+			}
+
+			if (valueCache.get(lightName).get("colormode") == null || !valueCache.get(lightName).get("colormode").equals(reworkName(state.getColorMode()))) {
+				valueCache.get(lightName).put("colormode", reworkName(state.getColorMode()));
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.getColorMode() != null) MQTTHandler.publishDistinct("lights/"+lightName, "colormode", reworkName(state.getColorMode()));
+			}
+
+			if (valueCache.get(lightName).get("reachable") == null || !valueCache.get(lightName).get("reachable").equals(state.isReachable())) {
+				valueCache.get(lightName).put("reachable", state.isReachable());
+				if (Boolean.getBoolean("hue2mqtt.mqtt.enableDistinctPublish") && state.isReachable() != null) MQTTHandler.publishDistinct("lights/"+lightName, "reachable", state.isReachable());
+			}
+
+
+			/*
+			 * Generate and publish a JSON object of the combined state
+			 */
+			if (!Boolean.getBoolean("hue2mqtt.mqtt.disableCombinedPublish")) {
+				WrappedJsonObject json=new WrappedJsonObject();
+				json.add("on",state.isOn());
+				json.add("bri",state.getBrightness());
+				json.add("hue",state.getHue());
+				json.add("sat",state.getSaturation());
+				json.add("ct",state.getCt());
+				json.add("transitiontime",state.getTransitionTime());
+				json.add("alert",reworkName(state.getAlertMode()));
+				json.add("effect",reworkName(state.getEffectMode()));
+				json.add("colormode",reworkName(state.getColorMode()));
+				json.add("reachable", state.isReachable());
+
+				if(state.getX()!=null)
+				{
+					JsonArray xy=new JsonArray();
+					xy.add(state.getX().floatValue());
+					xy.add(state.getY().floatValue());
+					json.add("xy",xy);
+				}
+
+				L.info("publishIfChanged " + lightName);
+				MQTTHandler.publishIfChanged(
+						"lights/"+lightName,
+						true,
+						"val", state.isOn().booleanValue() ? state.getBrightness() : Integer.valueOf(0),
+						"hue_state", json
+				);
+			}
 		}
 	}
 

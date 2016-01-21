@@ -78,6 +78,18 @@ The special group name 0 is also recognized and refers to the default group whic
 all lights connected to a bridge.
 
 
+Command Line Options
+====================
+
+* hue.bridge
+* mqtt.server - Default: `tcp://localhost:1883`
+* mqtt.clientid - Default: `hue2mqtt`
+* mqtt.topic - Default: `hue`
+* mqtt.enableDistinctPublish - if set to true all datapoints will be published separately
+* mqtt.disableCombinedPublish
+
+
+
 Dependencies
 ------------
 * Java 1.7 SE Runtime Environment: https://www.java.com/

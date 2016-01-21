@@ -350,14 +350,39 @@ public class MQTTHandler
 	}
 
 	static private Map<String,String> previouslyPublishedValues=new HashMap<>();
+
+	static void publishDistinct(String name, String key, Object val)
+	{
+		Boolean retain = true;
+
+		WrappedJsonObject jso=new WrappedJsonObject();
+
+		jso.add("val", val);
+		String txtmsg=jso.toString();
+
+		MqttMessage msg=new MqttMessage(txtmsg.getBytes(StandardCharsets.UTF_8));
+		msg.setQos(0);
+		msg.setRetained(retain);
+		try
+		{
+			String fullTopic=instance.topicPrefix+"status/"+name+"/"+key;
+			instance.mqttc.publish(fullTopic, msg);
+			instance.L.info("Published "+txtmsg+" to "+fullTopic+(retain?" (R)":""));
+		}
+		catch(MqttException e)
+		{
+			instance.L.log(Level.WARNING,"Error when publishing message "+val,e);
+		}
+	}
+
 	static void publishIfChanged(String name, boolean retain, Object... vals)
 	{
 		WrappedJsonObject jso=new WrappedJsonObject();
-		for(int pix=0;pix<vals.length;pix+=2)
-		{
+		for (int pix = 0; pix < vals.length; pix += 2) {
 			String vname=vals[pix].toString();
 			Object val=vals[pix+1];
 			jso.add(vname,val);
+
 		}
 		String txtmsg=jso.toString();
 		if(txtmsg.equals(previouslyPublishedValues.put(name,txtmsg)))
