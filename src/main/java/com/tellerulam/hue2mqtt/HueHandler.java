@@ -3,6 +3,8 @@ package com.tellerulam.hue2mqtt;
 import java.util.*;
 import java.util.logging.Logger;
 
+import java.util.prefs.Preferences;
+
 import com.eclipsesource.json.*;
 import com.philips.lighting.hue.listener.*;
 import com.philips.lighting.hue.sdk.*;
@@ -11,6 +13,27 @@ import com.philips.lighting.model.*;
 public class HueHandler implements PHSDKListener
 {
 	private static PHHueSDK phHueSDK;
+
+	private static HashMap<String, HashMap<String, Object>> valueCache = new HashMap<String, HashMap<String, Object>>();
+
+
+	private static String readUsername(String bridgeIp)
+	{
+		Preferences prefs;
+		prefs = Preferences.userRoot().node("com.tellerulam.hue2mqtt-" + bridgeIp);
+		String u = prefs.get("username", "huetomqtt");
+		L.info("loaded username " + u);
+		return u;
+	}
+
+	private static void saveUsername(String bridgeIp, String u)
+	{
+		Preferences prefs;
+		prefs = Preferences.userRoot().node("com.tellerulam.hue2mqtt-" + bridgeIp);
+		prefs.put("username", u);
+		L.info("saved username " + u);
+	}
+
 
 	static void init()
 	{
@@ -27,9 +50,12 @@ public class HueHandler implements PHSDKListener
 		}
 		else
 		{
+			L.info("got username " + readUsername(specifiedBridge));
+			String username = readUsername(specifiedBridge);
 			PHAccessPoint pap=new PHAccessPoint();
+			L.info("trying to connect with username " + username);
 			pap.setIpAddress(specifiedBridge);
-			pap.setUsername("huetomqttuser");
+			pap.setUsername(username);
 			phHueSDK.connect(pap);
 		}
 	}
@@ -49,8 +75,9 @@ public class HueHandler implements PHSDKListener
 			L.warning("Multiple bridges found. Will connect to the first bridge. This may not be what you want! Specify the bridge you want to connect to explicitely with hue.bridge=<name or ip>");
 		}
 		PHAccessPoint pap=bridges.get(0);
-		pap.setUsername("huetomqttuser");
-		L.info("Connecting to Hue bridge @ "+pap.getIpAddress());
+		pap.setUsername(readUsername(pap.getIpAddress()));
+		System.setProperty("hue2mqtt.hue.bridge", pap.getIpAddress());
+		L.info("Connecting to Hue bridge @ "+pap.getIpAddress() + " with username " + readUsername(pap.getIpAddress()));
 		phHueSDK.connect(pap);
 	}
 
@@ -319,6 +346,7 @@ public class HueHandler implements PHSDKListener
 	public void onBridgeConnected(PHBridge b, String name)
 	{
 		L.info("Successfully connected to Hue bridge as "+name);
+		saveUsername(System.getProperty("hue2mqtt.hue.bridge"), name);
 		phHueSDK.setSelectedBridge(b);
 		phHueSDK.enableHeartbeat(b, PHHueSDK.HB_INTERVAL);
 		MQTTHandler.setHueConnectionState(true);
