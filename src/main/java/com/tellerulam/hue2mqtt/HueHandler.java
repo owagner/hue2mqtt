@@ -11,13 +11,16 @@ import com.philips.lighting.model.*;
 public class HueHandler implements PHSDKListener
 {
 	private static PHHueSDK phHueSDK;
+	private static HueHandler instance;
 
 	static void init()
 	{
+		instance=new HueHandler();
+
 		phHueSDK=PHHueSDK.getInstance();
 		phHueSDK.setAppName("hue2mqtt");
 		phHueSDK.setDeviceName("hue2mqtt");
-		phHueSDK.getNotificationManager().registerSDKListener(new HueHandler());
+		phHueSDK.getNotificationManager().registerSDKListener(instance);
 		String specifiedBridge=System.getProperty("hue2mqtt.hue.bridge");
 
 		if(specifiedBridge==null)
@@ -30,8 +33,20 @@ public class HueHandler implements PHSDKListener
 			PHAccessPoint pap=new PHAccessPoint();
 			pap.setIpAddress(specifiedBridge);
 			pap.setUsername("huetomqttuser");
-			phHueSDK.connect(pap);
+			instance.connect(pap);
 		}
+	}
+
+	private PHAccessPoint lastPap;
+	private void connect(PHAccessPoint pap)
+	{
+		lastPap=pap;
+		phHueSDK.connect(pap);
+	}
+
+	protected void reconnect()
+	{
+		connect(lastPap);
 	}
 
 	@Override
@@ -51,7 +66,7 @@ public class HueHandler implements PHSDKListener
 		PHAccessPoint pap=bridges.get(0);
 		pap.setUsername("huetomqttuser");
 		L.info("Connecting to Hue bridge @ "+pap.getIpAddress());
-		phHueSDK.connect(pap);
+		connect(pap);
 	}
 
 	@Override
@@ -122,6 +137,14 @@ public class HueHandler implements PHSDKListener
 	public void onError(int e, String msg)
 	{
 		L.warning("Error in bridge connection. Code "+e+": "+msg);
+		/* Retry connection in 10s */
+		Main.t.schedule(new TimerTask(){
+			@Override
+			public void run()
+			{
+				reconnect();
+			}
+		}, 10000);
 	}
 
 	@Override
@@ -214,12 +237,12 @@ public class HueHandler implements PHSDKListener
 		return null;
 	}
 
-	public static void updateLightState(String name,PHLightState ls)
+	public static void updateLightState(final String name,final PHLightState ls)
 	{
 		final PHBridgeResource res=findResourceByName(name);
 		if(res==null)
 		{
-			L.info("Unable to find resource by name "+name);
+			L.info("Unable to find resource by name: "+name);
 			return;
 		}
 

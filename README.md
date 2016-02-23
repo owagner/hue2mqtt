@@ -1,7 +1,7 @@
 hue2mqtt
 ========
 
-  Written and (C) 2015 Oliver Wagner <owagner@tellerulam.com> 
+  Written and (C) 2015-16 Oliver Wagner <owagner@tellerulam.com> 
   
   Provided under the terms of the MIT license.
 
@@ -90,6 +90,9 @@ Dependencies
 
 History
 -------
+* 0.10 - 2016/02/23 - owagner
+  - attempt to reconnect every 10s if bridge connection errors out
+
 * 0.9 - 2015/10/01 - owagner
   - truncate float numbers to integer when setting integer-only datapoints. Fixes #6
   - update Philip Hue lib to 1.8.3

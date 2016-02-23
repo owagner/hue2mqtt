@@ -55,7 +55,7 @@ public class Main
 			System.setProperty("hue2mqtt."+sp[0],sp[1]);
 		}
 		SyslogHandler.readConfig();
-		Logger.getLogger(Main.class.getName()).info("hue2mqtt V"+getVersion()+" (C) 2015 Oliver Wagner <owagner@tellerulam.com>");
+		Logger.getLogger(Main.class.getName()).info("hue2mqtt V"+getVersion()+" (C) 2015-16 Oliver Wagner <owagner@tellerulam.com>");
 		MQTTHandler.init();
 		HueHandler.init();
 	}
