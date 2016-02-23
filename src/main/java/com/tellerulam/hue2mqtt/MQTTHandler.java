@@ -151,9 +151,9 @@ public class MQTTHandler
 	/*
 	 * Parse a number and truncate to integer
 	 */
-	private int parseNumber(String number)
+	private Integer parseNumber(String number)
 	{
-		return (int)Double.parseDouble(number);
+		return Integer.valueOf((int)Double.parseDouble(number));
 	}
 
 	private void addDatapointToLightState(PHLightState ls,String datapoint,String value)
