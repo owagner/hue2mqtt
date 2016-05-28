@@ -78,6 +78,13 @@ The special group name 0 is also recognized and refers to the default group whic
 all lights connected to a bridge.
 
 
+Authentication
+--------------
+Like all applications connecting to a Hue bridge, hue2mqtt needs to be authenticated using push link
+at least once. The bridge will then assign a whitelist username (in fact a token) which is automatically
+used on subsequent connections. The token is stored using Java Preferences. 
+
+
 Dependencies
 ------------
 * Java 1.7 SE Runtime Environment: https://www.java.com/
@@ -90,6 +97,12 @@ Dependencies
 
 History
 -------
+* 0.11 - 2016/05/28 - owagner/hobbyquaker
+  - adapted to new 1.8.1+ API scheme of whitelist usernames being assigned by the bridge.
+    The assigned username is stored using Java Preferences. The scheme should be compatible
+    with already authorized hue2mqtt instances, which used a hardcoded username of "hue2mqttuser".
+  - Hue API libraries updated to 0.11.2.
+
 * 0.10 - 2016/02/23 - owagner
   - attempt to reconnect every 10s if bridge connection errors out
 

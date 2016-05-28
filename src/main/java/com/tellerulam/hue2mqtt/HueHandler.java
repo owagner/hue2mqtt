@@ -2,6 +2,7 @@ package com.tellerulam.hue2mqtt;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.prefs.*;
 
 import com.eclipsesource.json.*;
 import com.philips.lighting.hue.listener.*;
@@ -12,6 +13,34 @@ public class HueHandler implements PHSDKListener
 {
 	private static PHHueSDK phHueSDK;
 	private static HueHandler instance;
+
+	/*
+	 * Since Hue SDK 1.8.1, it is no longer possible to set your own whitelist username.
+	 * Instead, the bridge will assign you an username which you have to present on subsequent
+	 * connections.
+	 *
+	 * We use the Java Preference API to store the assigned username per bridge IP or hostname.
+	 */
+
+	private static String usedBridgeIP;
+
+	private static String readUsername(String bridgeIp)
+	{
+		Preferences prefs;
+		prefs = Preferences.userRoot().node("com.tellerulam.hue2mqtt-" + bridgeIp);
+		String u = prefs.get("username", "huetomqttuser");
+		L.info("Using whitelist username "+u+" for Bridge IP "+bridgeIp);
+		return u;
+	}
+
+	private static void saveUsername(String bridgeIp, String u)
+	{
+		Preferences prefs;
+		prefs = Preferences.userRoot().node("com.tellerulam.hue2mqtt-" + bridgeIp);
+		prefs.put("username", u);
+		L.info("Saved whitelist username "+u+" for Bridge IP "+bridgeIp);
+	}
+
 
 	static void init()
 	{
@@ -31,8 +60,9 @@ public class HueHandler implements PHSDKListener
 		else
 		{
 			PHAccessPoint pap=new PHAccessPoint();
+			usedBridgeIP=specifiedBridge;
 			pap.setIpAddress(specifiedBridge);
-			pap.setUsername("huetomqttuser");
+			pap.setUsername(readUsername(specifiedBridge));
 			instance.connect(pap);
 		}
 	}
@@ -64,8 +94,10 @@ public class HueHandler implements PHSDKListener
 			L.warning("Multiple bridges found. Will connect to the first bridge. This may not be what you want! Specify the bridge you want to connect to explicitely with hue.bridge=<name or ip>");
 		}
 		PHAccessPoint pap=bridges.get(0);
-		pap.setUsername("huetomqttuser");
-		L.info("Connecting to Hue bridge @ "+pap.getIpAddress());
+		usedBridgeIP=pap.getIpAddress();
+		String username=readUsername(usedBridgeIP);
+		pap.setUsername(username);
+		L.info("Connecting to Hue bridge @ "+pap.getIpAddress()+" with username "+username);
 		connect(pap);
 	}
 
@@ -136,7 +168,13 @@ public class HueHandler implements PHSDKListener
 	@Override
 	public void onError(int e, String msg)
 	{
-		L.warning("Error in bridge connection. Code "+e+": "+msg);
+		if(e==101)
+		{
+			/* This is "Authentication required", we silently ignore it here */
+			return;
+		}
+
+		L.warning("Error in bridge connection. Code "+e+": "+msg+"; will reconnect in 10s");
 		/* Retry connection in 10s */
 		Main.t.schedule(new TimerTask(){
 			@Override
@@ -343,6 +381,7 @@ public class HueHandler implements PHSDKListener
 	{
 		L.info("Successfully connected to Hue bridge as "+name);
 		phHueSDK.setSelectedBridge(b);
+		saveUsername(usedBridgeIP,name);
 		phHueSDK.enableHeartbeat(b, PHHueSDK.HB_INTERVAL);
 		MQTTHandler.setHueConnectionState(true);
 		Main.t.schedule(new TimerTask(){
