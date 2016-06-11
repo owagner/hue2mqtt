@@ -85,6 +85,29 @@ at least once. The bridge will then assign a whitelist username (in fact a token
 used on subsequent connections. The token is stored using Java Preferences. 
 
 
+### Available options:    
+
+- bridge.id
+
+  ID of the Hue bridge to connect to. Required if there is more than one bridge on the network.
+  
+- bridge.ip
+
+  Like ID, but using the IP address. Not recommended.
+
+- mqtt.server
+
+  ServerURI of the MQTT broker to connect to. Defaults to "tcp://localhost:1883".
+  
+- mqtt.clientid
+
+  ClientID to use in the MQTT connection. Defaults to "knx2mqtt".
+  
+- mqtt.topic
+
+  The topic prefix used for publishing and subscribing. Defaults to "knx/".
+
+
 Dependencies
 ------------
 * Java 1.7 SE Runtime Environment: https://www.java.com/
@@ -97,6 +120,10 @@ Dependencies
 
 History
 -------
+* 0.12 - 2016/06/11 - owagner
+  - will now always go through bridge recovery. Bridges can be specified using either their ID (preferred) or IP.
+    Username is stored per ID.
+
 * 0.11 - 2016/05/28 - owagner/hobbyquaker
   - adapted to new 1.8.1+ API scheme of whitelist usernames being assigned by the bridge.
     The assigned username is stored using Java Preferences. The scheme should be compatible
