@@ -84,6 +84,10 @@ Like all applications connecting to a Hue bridge, hue2mqtt needs to be authentic
 at least once. The bridge will then assign a whitelist username (in fact a token) which is automatically
 used on subsequent connections. The token is stored using Java Preferences. 
 
+When authentication is required, a one-shot not retained message is published to topic
+
+	hue/status/authrequired
+	
 
 ### Available options:    
 
@@ -101,7 +105,7 @@ used on subsequent connections. The token is stored using Java Preferences.
   
 - mqtt.clientid
 
-  ClientID to use in the MQTT connection. Defaults to "knx2mqtt".
+  ClientID to use in the MQTT connection. Defaults to "hue".
   
 - mqtt.topic
 
@@ -121,8 +125,9 @@ Dependencies
 History
 -------
 * 0.12 - 2016/06/11 - owagner
-  - will now always go through bridge recovery. Bridges can be specified using either their ID (preferred) or IP.
+  - will now always go through bridge discovery. Bridges can be specified using either their ID (preferred) or IP.
     Username is stored per ID.
+  - will now publish a non-retained message to topic/status/authrequired if authentication is required.
 
 * 0.11 - 2016/05/28 - owagner/hobbyquaker
   - adapted to new 1.8.1+ API scheme of whitelist usernames being assigned by the bridge.

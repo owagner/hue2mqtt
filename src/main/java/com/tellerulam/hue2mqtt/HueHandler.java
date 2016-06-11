@@ -130,6 +130,7 @@ public class HueHandler implements PHSDKListener
 	{
 		L.severe("IMPORTANT! AUTHENTICATION REQUIRED -- press the button on your Hue Bridge "+pap.getIpAddress()+" within 30s to authenticate hue2mqtt!");
 		phHueSDK.startPushlinkAuthentication(pap);
+		MQTTHandler.notifyAuthRequired();
 	}
 
 	private void reportGroups(PHBridgeResourcesCache cache)

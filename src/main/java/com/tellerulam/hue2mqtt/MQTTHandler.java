@@ -389,4 +389,16 @@ public class MQTTHandler
 		}
 	}
 
+	public static void notifyAuthRequired()
+	{
+		try
+		{
+			instance.mqttc.publish(instance.topicPrefix+"status/authrequired","1".getBytes(),1,false);
+		}
+		catch(MqttException e)
+		{
+			/* Ignore */
+		}
+	}
+
 }
