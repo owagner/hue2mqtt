@@ -124,6 +124,9 @@ Dependencies
 
 History
 -------
+* 0.13 - 2016/07/5 - owagner
+  - actually deal with error 1157 ("No bridges found") in onError handler and exit
+
 * 0.12 - 2016/06/11 - owagner
   - will now always go through bridge discovery. Bridges can be specified using either their ID (preferred) or IP.
     Username is stored per ID.

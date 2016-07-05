@@ -198,6 +198,11 @@ public class HueHandler implements PHSDKListener
 			/* This is "Authentication required", we silently ignore it here */
 			return;
 		}
+		if(e==1157)
+		{
+			L.warning("No bridges found, please check your configuration!");
+			System.exit(1);
+		}
 
 		L.warning("Error in bridge connection. Code "+e+": "+msg+"; will reconnect in 10s");
 		/* Retry connection in 10s */
