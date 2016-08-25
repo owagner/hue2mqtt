@@ -111,6 +111,10 @@ When authentication is required, a one-shot not retained message is published to
 
   The topic prefix used for publishing and subscribing. Defaults to "knx/".
 
+- mqtt.qos
+
+  The quality of service used for publishing. Defaults to 0. Possible values are 0, 1, and 2.
+
 
 Dependencies
 ------------
