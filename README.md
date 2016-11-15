@@ -2,6 +2,10 @@ hue2mqtt
 ========
 
   Written and (C) 2015-16 Oliver Wagner <owagner@tellerulam.com> 
+  Additions (C) 2016 Christian Renz <crenz@web42.com>
+  
+  This is a fork of the original project implemented by Oliver Wagner.
+  Thank you for all the hard work, Oliver.
   
   Provided under the terms of the MIT license.
 
@@ -123,7 +127,7 @@ Dependencies
 * Minimal-JSON: https://github.com/ralfstx/minimal-json (used for JSON creation and parsing)
 * Philips HUE Java API Library: https://github.com/PhilipsHue/PhilipsHueSDK-Java-MultiPlatform-Android
 
-[![Build Status](https://travis-ci.org/owagner/hue2mqtt.svg)](https://travis-ci.org/owagner/hue2mqtt) Automatically built jars can be downloaded from the release page on GitHub at https://github.com/owagner/hue2mqtt/releases
+[![Build Status](https://travis-ci.org/crenz/hue2mqtt.svg?branch=master)](https://travis-ci.org/crenz/hue2mqtt) Automatically built jars of previous versions can be downloaded from the original release page on GitHub at https://github.com/owagner/hue2mqtt/releases
 
 
 History
