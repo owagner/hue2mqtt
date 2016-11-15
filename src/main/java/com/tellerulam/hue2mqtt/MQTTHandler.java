@@ -377,7 +377,11 @@ public class MQTTHandler
 			Object val=vals[pix+1];
 			jso.add(vname,val);
 		}
-		String txtmsg=jso.toString();
+		MQTTHandler.publishStringIfChanged(name, retain, jso.toString());
+	}
+
+	static void publishStringIfChanged(String name, boolean retain, String txtmsg)
+	{
 		if(txtmsg.equals(previouslyPublishedValues.put(name,txtmsg)))
 			return;
 		MqttMessage msg=new MqttMessage(txtmsg.getBytes(StandardCharsets.UTF_8));
