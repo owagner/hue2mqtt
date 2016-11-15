@@ -28,13 +28,31 @@ public class MQTTHandler
 	private static MQTTHandler instance;
 
 	private final String topicPrefix;
+
+	private static Integer qos;
+
 	private MQTTHandler()
 	{
 		String tp=System.getProperty("hue2mqtt.mqtt.topic","hue");
 		if(!tp.endsWith("/"))
 			tp+="/";
 		topicPrefix=tp;
-	}
+
+		qos = 0; // default QoS value
+
+		String s_qos = System.getProperty("hue2mqtt.mqtt.qos","hue");
+		if (s_qos != null) {
+            try {
+                qos = Integer.parseInt(s_qos);
+            } catch (NumberFormatException e) {
+
+            }
+        }
+
+        // Limit QoS value to range between 0 and 2
+        if (qos < 0) qos = 0;
+        if (qos > 2) qos = 2;
+    }
 
 	private MqttClient mqttc;
 
@@ -359,11 +377,15 @@ public class MQTTHandler
 			Object val=vals[pix+1];
 			jso.add(vname,val);
 		}
-		String txtmsg=jso.toString();
+		MQTTHandler.publishStringIfChanged(name, retain, jso.toString());
+	}
+
+	static void publishStringIfChanged(String name, boolean retain, String txtmsg)
+	{
 		if(txtmsg.equals(previouslyPublishedValues.put(name,txtmsg)))
 			return;
 		MqttMessage msg=new MqttMessage(txtmsg.getBytes(StandardCharsets.UTF_8));
-		msg.setQos(0);
+		msg.setQos(qos);
 		msg.setRetained(retain);
 		try
 		{

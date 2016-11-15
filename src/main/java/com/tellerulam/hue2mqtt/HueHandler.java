@@ -247,6 +247,7 @@ public class HueHandler implements PHSDKListener
 			 * Generate a JSON object with the state
 			 */
 			WrappedJsonObject json=new WrappedJsonObject();
+			json.add("val", state.isOn().booleanValue() ? state.getBrightness() : Integer.valueOf(0));
 			json.add("on",state.isOn());
 			json.add("bri",state.getBrightness());
 			json.add("hue",state.getHue());
@@ -264,11 +265,16 @@ public class HueHandler implements PHSDKListener
 				xy.add(state.getY().floatValue());
 				json.add("xy",xy);
 			}
-			MQTTHandler.publishIfChanged(
+/*			MQTTHandler.publishIfChanged(
 				"lights/"+l.getName(),
 				true,
 				"val", state.isOn().booleanValue() ? state.getBrightness() : Integer.valueOf(0),
 				"hue_state", json
+			); */
+			MQTTHandler.publishStringIfChanged(
+					"lights/"+l.getName(),
+					true,
+					json.toString()
 			);
 		}
 	}
