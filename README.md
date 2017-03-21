@@ -105,11 +105,11 @@ When authentication is required, a one-shot not retained message is published to
   
 - mqtt.clientid
 
-  ClientID to use in the MQTT connection. Defaults to "hue".
+  ClientID to use in the MQTT connection. Defaults to "hue2mqtt".
   
 - mqtt.topic
 
-  The topic prefix used for publishing and subscribing. Defaults to "knx/".
+  The topic prefix used for publishing and subscribing. Defaults to "hue/".
 
 
 Dependencies
