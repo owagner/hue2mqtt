@@ -1,24 +1,39 @@
 package com.tellerulam.hue2mqtt;
 
-import java.nio.charset.*;
-import java.util.*;
-import java.util.logging.*;
-import java.util.regex.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.eclipse.paho.client.mqttv3.*;
-import org.eclipse.paho.client.mqttv3.persist.*;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
-import com.eclipsesource.json.*;
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonObject.Member;
-import com.philips.lighting.model.*;
+import com.eclipsesource.json.JsonValue;
 import com.philips.lighting.model.PHLight.PHLightAlertMode;
 import com.philips.lighting.model.PHLight.PHLightColorMode;
 import com.philips.lighting.model.PHLight.PHLightEffectMode;
+import com.philips.lighting.model.PHLightState;
 
 public class MQTTHandler
 {
 	private final Logger L=Logger.getLogger(getClass().getName());
-
+	private String MQTT_USERNAME="";
+	private String MQTT_PASSWORD="";
+	
 	public static void init() throws MqttException
 	{
 		instance=new MQTTHandler();
@@ -291,6 +306,13 @@ public class MQTTHandler
 
 		MqttConnectOptions copts=new MqttConnectOptions();
 		copts.setWill(topicPrefix+"connected", "0".getBytes(), 2, true);
+
+		//only set Username and password if at least one is set
+		if (!MQTT_PASSWORD.isEmpty() || !MQTT_USERNAME.isEmpty()) {
+			L.info("Using Username " + MQTT_USERNAME + " and Password "+String.join("", Collections.nCopies(MQTT_PASSWORD.length(), "*"))); 
+			copts.setUserName(MQTT_USERNAME);
+			copts.setPassword(MQTT_PASSWORD.toCharArray());
+		}
 		copts.setCleanSession(true);
 		try
 		{
@@ -319,6 +341,8 @@ public class MQTTHandler
 	{
 		String server=System.getProperty("hue2mqtt.mqtt.server","tcp://localhost:1883");
 		String clientID=System.getProperty("hue2mqtt.mqtt.clientid","hue2mqtt");
+		MQTT_USERNAME=System.getProperty("hue2mqtt.mqtt.username","");
+		MQTT_PASSWORD=System.getProperty("hue2mqtt.mqtt.password","");
 		mqttc=new MqttClient(server,clientID,new MemoryPersistence());
 		mqttc.setCallback(new MqttCallback() {
 			@Override
