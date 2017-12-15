@@ -392,6 +392,10 @@ public class MQTTHandler
 		try
 		{
 			String fullTopic=instance.topicPrefix+"status/"+name;
+            if(!instance.mqttc.isConnected()){
+                instance.L.info("MQTT Client not connected, adhoc reconnect");    
+                doConnect();
+            }
 			instance.mqttc.publish(fullTopic, msg);
 			instance.L.info("Published "+txtmsg+" to "+fullTopic+(retain?" (R)":""));
 		}
