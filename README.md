@@ -91,6 +91,8 @@ When authentication is required, a one-shot not retained message is published to
 
 ### Available options:    
 
+If you need to configure your own mqtt server you will need to configure the hue2mqtt application. All parameters are taken form System arguments. Parameters have to be given in the form 'namespace.parameter=value'
+
 - bridge.id
 
   ID of the Hue bridge to connect to. Required if there is more than one bridge on the network.
@@ -111,6 +113,15 @@ When authentication is required, a one-shot not retained message is published to
 
   The topic prefix used for publishing and subscribing. Defaults to "knx/".
 
+- mqtt.username
+
+  The username is optional, it is used if your mqtt broker expects a user authentication. Defaults to "" 
+  
+- mqtt.password
+
+  The password that corresponds with the username parameter. Defaults to ""
+
+
 
 Dependencies
 ------------
@@ -120,6 +131,10 @@ Dependencies
 * Philips HUE Java API Library: https://github.com/PhilipsHue/PhilipsHueSDK-Java-MultiPlatform-Android
 
 [![Build Status](https://travis-ci.org/owagner/hue2mqtt.svg)](https://travis-ci.org/owagner/hue2mqtt) Automatically built jars can be downloaded from the release page on GitHub at https://github.com/owagner/hue2mqtt/releases
+
+
+##Building
+You will need gradle to build this project. Therefore install gradle on your system or use an IDE Plugin such as the Eclipse plugin "Gradle IDE Pack".
 
 
 History
